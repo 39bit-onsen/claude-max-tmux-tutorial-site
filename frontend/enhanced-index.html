@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tmux環境でclaudeMAX管理 - 教材サイト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 240px;
+            background-color: #1f2937;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 10px 12px;
+            position: absolute;
+            z-index: 50;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -120px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 13px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            line-height: 1.4;
+        }
+        .tooltip:hover .tooltiptext,
+        .tooltip:focus .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .progress-bar {
+            transition: width 0.3s ease-in-out;
+        }
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .drawer-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 300px;
+            background: white;
+            z-index: 50;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+        .drawer.show {
+            transform: translateX(0);
+        }
+        .chapter-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            transition: background-color 0.3s;
+            flex-shrink: 0;
+        }
+        .chapter-dot.completed {
+            background-color: #10b981;
+        }
+        .chapter-dot.current {
+            background-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        @media (max-width: 1023px) {
+            .desktop-sidebar {
+                display: none;
+            }
+        }
+        @media (min-width: 1024px) {
+            .mobile-menu-button {
+                display: none;
+            }
+        }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        /* 高コントラスト対応 */
+        @media (prefers-contrast: high) {
+            .tooltip .tooltiptext {
+                background-color: #000;
+                border: 2px solid #fff;
+            }
+        }
+        /* 動きを減らす設定に対応 */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- ナビゲーションヘッダー -->
+    <nav class="bg-blue-600 text-white shadow-lg" role="banner">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <button class="mobile-menu-button lg:hidden p-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-white" aria-label="メニューを開く" id="mobile-menu-btn">
+                        <i class="fas fa-bars" aria-hidden="true"></i>
+                    </button>
+                    <h1 class="text-xl font-bold">tmux環境でclaudeMAX管理</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden sm:flex items-center space-x-3">
+                        <span class="text-sm">進捗:</span>
+                        <span id="progress-percentage" class="text-sm font-semibold">0%</span>
+                        <div class="flex space-x-1 ml-2" id="progress-dots" aria-label="章の進捗">
+                            <!-- 章のドットは JavaScript で生成 -->
+                        </div>
+                    </div>
+                    <div class="w-32 bg-blue-300 rounded-full h-2" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-describedby="progress-percentage">
+                        <div id="progress-bar" class="progress-bar bg-white h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- モバイルドロワーメニュー -->
+    <div class="drawer-overlay" id="drawer-overlay" aria-hidden="true"></div>
+    <div class="drawer" id="drawer" role="dialog" aria-labelledby="drawer-title" aria-hidden="true">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="drawer-title" class="text-lg font-semibold">学習チャプター</h2>
+                <button class="p-2 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="メニューを閉じる" id="close-drawer-btn">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <nav class="space-y-2" role="navigation" aria-label="チャプターナビゲーション">
+                <a href="#chapter-1" class="chapter-link drawer-link flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-chapter="1" role="menuitem">
+                    <i class="fas fa-home mr-3 text-gray-600" aria-hidden="true"></i>
+                    <div class="flex-1">
+                        <span class="block font-medium">1. はじめに</span>
+                        <span class="chapter-status block text-sm text-gray-400">未完了</span>
+                    </div>
+                </a>
+                <a href="#chapter-2" class="chapter-link drawer-link flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-chapter="2" role="menuitem">
+                    <i class="fas fa-info-circle mr-3 text-gray-600" aria-hidden="true"></i>
+                    <div class="flex-1">
+                        <span class="block font-medium">2. 導入</span>
+                        <span class="chapter-status block text-sm text-gray-400">未完了</span>
+                    </div>
+                </a>
+                <a href="#chapter-3" class="chapter-link drawer-link flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-chapter="3" role="menuitem">
+                    <i class="fas fa-cog mr-3 text-gray-600" aria-hidden="true"></i>
+                    <div class="flex-1">
+                        <span class="block font-medium">3. 環境構築</span>
+                        <span class="chapter-status block text-sm text-gray-400">未完了</span>
+                    </div>
+                </a>
+                <a href="#chapter-4" class="chapter-link drawer-link flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-chapter="4" role="menuitem">
+                    <i class="fas fa-play-circle mr-3 text-gray-600" aria-hidden="true"></i>
+                    <div class="flex-1">
+                        <span class="block font-medium">4. 動作確認</span>
+                        <span class="chapter-status block text-sm text-gray-400">未完了</span>
+                    </div>
+                </a>
+                <a href="#chapter-5" class="chapter-link drawer-link flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-chapter="5" role="menuitem">
+                    <i class="fas fa-rocket mr-3 text-gray-600" aria-hidden="true"></i>
+                    <div class="flex-1">
+                        <span class="block font-medium">5. 応用</span>
+                        <span class="chapter-status block text-sm text-gray-400">未完了</span>
+                    </div>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- デスクトップサイドバーナビゲーション -->
+            <aside class="desktop-sidebar lg:w-80 flex-shrink-0">
+                <div class="bg-white rounded-lg shadow-md p-6 sticky top-8">
+                    <h2 class="text-lg font-semibold mb-4">学習チャプター</h2>
+                    <nav class="space-y-2" role="navigation" aria-label="チャプターナビゲーション">
+                        <a href="#chapter-1" class="chapter-link flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-chapter="1" role="menuitem">
+                            <i class="fas fa-home mr-3 text-gray-600" aria-hidden="true"></i>
+                            <div class="flex-1">
+                                <span class="block font-medium">1. はじめに</span>
+                                <span class="chapter-status block text-sm text-gray-400">未完了</span>
+                            </div>
+                        </a>
+                        <a href="#chapter-2" class="chapter-link flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-chapter="2" role="menuitem">
+                            <i class="fas fa-info-circle mr-3 text-gray-600" aria-hidden="true"></i>
+                            <div class="flex-1">
+                                <span class="block font-medium">2. 導入</span>
+                                <span class="chapter-status block text-sm text-gray-400">未完了</span>
+                            </div>
+                        </a>
+                        <a href="#chapter-3" class="chapter-link flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-chapter="3" role="menuitem">
+                            <i class="fas fa-cog mr-3 text-gray-600" aria-hidden="true"></i>
+                            <div class="flex-1">
+                                <span class="block font-medium">3. 環境構築</span>
+                                <span class="chapter-status block text-sm text-gray-400">未完了</span>
+                            </div>
+                        </a>
+                        <a href="#chapter-4" class="chapter-link flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-chapter="4" role="menuitem">
+                            <i class="fas fa-play-circle mr-3 text-gray-600" aria-hidden="true"></i>
+                            <div class="flex-1">
+                                <span class="block font-medium">4. 動作確認</span>
+                                <span class="chapter-status block text-sm text-gray-400">未完了</span>
+                            </div>
+                        </a>
+                        <a href="#chapter-5" class="chapter-link flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" data-chapter="5" role="menuitem">
+                            <i class="fas fa-rocket mr-3 text-gray-600" aria-hidden="true"></i>
+                            <div class="flex-1">
+                                <span class="block font-medium">5. 応用</span>
+                                <span class="chapter-status block text-sm text-gray-400">未完了</span>
+                            </div>
+                        </a>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- メインコンテンツエリア -->
+            <main class="flex-1 min-w-0" role="main">
+                <!-- チャプター1: はじめに -->
+                <section id="chapter-1" class="chapter bg-white rounded-lg shadow-md p-6 sm:p-8 mb-8" role="article" aria-labelledby="chapter-1-title">
+                    <h2 id="chapter-1-title" class="text-2xl font-bold mb-6 text-blue-600">
+                        <i class="fas fa-home mr-2" aria-hidden="true"></i>
+                        1. はじめに
+                    </h2>
+                    <div class="prose max-w-none">
+                        <p class="text-lg text-gray-700 mb-4">
+                            このチュートリアルでは、tmux環境でclaudeMAX（Claude Code）を効率的に管理する方法を学習します。
+                        </p>
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                            <h3 class="font-semibold text-blue-800 mb-2">学習目標</h3>
+                            <ul class="list-disc list-inside text-blue-700 space-y-1">
+                                <li>tmuxの基本的な使い方を理解する</li>
+                                <li>claudeMAXの複数インスタンス管理方法を習得する</li>
+                                <li>効率的な開発環境を構築する</li>
+                            </ul>
+                        </div>
+                        <div class="tooltip">
+                            <span class="text-blue-600 cursor-help underline" tabindex="0" role="button" aria-describedby="tmux-tooltip">tmux</span>
+                            <span class="tooltiptext" id="tmux-tooltip" role="tooltip">ターミナル多重化ツール。複数のターミナルセッションを管理できます。セッション、ウィンドウ、ペインの概念を理解することが重要です。</span>
+                        </div>
+                        と
+                        <div class="tooltip">
+                            <span class="text-blue-600 cursor-help underline" tabindex="0" role="button" aria-describedby="claudemax-tooltip">claudeMAX</span>
+                            <span class="tooltiptext" id="claudemax-tooltip" role="tooltip">Claude Codeの高度な機能を活用した開発環境。AI支援による効率的なコーディングが可能です。</span>
+                        </div>
+                        を組み合わせることで、開発効率を大幅に向上させることができます。
+                    </div>
+                    <div class="mt-6">
+                        <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors" data-chapter="1" aria-describedby="chapter-1-complete-desc">
+                            <i class="fas fa-check mr-2" aria-hidden="true"></i>
+                            チャプター完了
+                        </button>
+                        <p id="chapter-1-complete-desc" class="sr-only">このボタンを押すとチャプター1が完了としてマークされ、次のチャプターに進むことができます</p>
+                    </div>
+                </section>
+
+                <!-- チャプター2: 導入 -->
+                <section id="chapter-2" class="chapter bg-white rounded-lg shadow-md p-6 sm:p-8 mb-8" style="display: none;" role="article" aria-labelledby="chapter-2-title">
+                    <h2 id="chapter-2-title" class="text-2xl font-bold mb-6 text-blue-600">
+                        <i class="fas fa-info-circle mr-2" aria-hidden="true"></i>
+                        2. 導入
+                    </h2>
+                    <div class="prose max-w-none">
+                        <p class="text-lg text-gray-700 mb-4">
+                            まず、tmuxとclaudeMAXの基本概念について説明します。
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h3 class="font-semibold text-gray-800 mb-2">
+                                    <div class="tooltip">
+                                        <span class="text-blue-600 cursor-help underline" tabindex="0" role="button" aria-describedby="tmux-intro-tooltip">tmux</span>
+                                        <span class="tooltiptext" id="tmux-intro-tooltip" role="tooltip">Terminal Multiplexer の略。仮想的な端末環境を提供し、複数のプロセスを同時に実行できます。</span>
+                                    </div>
+                                    とは
+                                </h3>
+                                <p class="text-sm text-gray-600">
+                                    Terminal Multiplexerの略で、一つのターミナル内で複数のセッションを実行できるツールです。
+                                </p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h3 class="font-semibold text-gray-800 mb-2">
+                                    <div class="tooltip">
+                                        <span class="text-blue-600 cursor-help underline" tabindex="0" role="button" aria-describedby="claudemax-intro-tooltip">claudeMAX</span>
+                                        <span class="tooltiptext" id="claudemax-intro-tooltip" role="tooltip">Claude Code の機能を最大限に活用するための開発手法とツール群の総称です。</span>
+                                    </div>
+                                    とは
+                                </h3>
+                                <p class="text-sm text-gray-600">
+                                    Claude Codeの拡張機能で、より高度な開発支援機能を提供します。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors" data-chapter="2">
+                            <i class="fas fa-check mr-2" aria-hidden="true"></i>
+                            チャプター完了
+                        </button>
+                    </div>
+                </section>
+
+                <!-- チャプター3: 環境構築 -->
+                <section id="chapter-3" class="chapter bg-white rounded-lg shadow-md p-6 sm:p-8 mb-8" style="display: none;" role="article" aria-labelledby="chapter-3-title">
+                    <h2 id="chapter-3-title" class="text-2xl font-bold mb-6 text-blue-600">
+                        <i class="fas fa-cog mr-2" aria-hidden="true"></i>
+                        3. 環境構築
+                    </h2>
+                    <div class="prose max-w-none">
+                        <p class="text-lg text-gray-700 mb-4">
+                            実際にtmux環境を構築し、claudeMAXを設定します。
+                        </p>
+                        <div class="bg-gray-800 text-green-400 p-4 rounded-lg mb-6 font-mono text-sm overflow-x-auto">
+                            <div class="mb-2"># tmuxのインストール</div>
+                            <div class="mb-2">sudo apt-get install tmux</div>
+                            <div class="mb-2"># 新しいセッションを作成</div>
+                            <div>tmux new-session -d -s claude-dev</div>
+                        </div>
+                        <div class="mt-4">
+                            <h4 class="font-semibold mb-2">主要な用語説明:</h4>
+                            <ul class="space-y-2">
+                                <li>
+                                    <div class="tooltip">
+                                        <span class="text-blue-600 cursor-help underline font-medium" tabindex="0" role="button" aria-describedby="session-tooltip">セッション</span>
+                                        <span class="tooltiptext" id="session-tooltip" role="tooltip">tmuxの最上位コンテナ。独立した作業環境を提供し、複数のウィンドウを含むことができます。</span>
+                                    </div>
+                                    : tmuxの基本単位となる作業環境
+                                </li>
+                                <li>
+                                    <div class="tooltip">
+                                        <span class="text-blue-600 cursor-help underline font-medium" tabindex="0" role="button" aria-describedby="window-tooltip">ウィンドウ</span>
+                                        <span class="tooltiptext" id="window-tooltip" role="tooltip">セッション内のタブのような概念。複数のペインに分割可能です。</span>
+                                    </div>
+                                    : セッション内のタブのような概念
+                                </li>
+                                <li>
+                                    <div class="tooltip">
+                                        <span class="text-blue-600 cursor-help underline font-medium" tabindex="0" role="button" aria-describedby="pane-tooltip">ペイン</span>
+                                        <span class="tooltiptext" id="pane-tooltip" role="tooltip">ウィンドウ内の分割された領域。個別のターミナルセッションを実行できます。</span>
+                                    </div>
+                                    : ウィンドウ内の分割された領域
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors" data-chapter="3">
+                            <i class="fas fa-check mr-2" aria-hidden="true"></i>
+                            チャプター完了
+                        </button>
+                    </div>
+                </section>
+
+                <!-- チャプター4: 動作確認 -->
+                <section id="chapter-4" class="chapter bg-white rounded-lg shadow-md p-6 sm:p-8 mb-8" style="display: none;" role="article" aria-labelledby="chapter-4-title">
+                    <h2 id="chapter-4-title" class="text-2xl font-bold mb-6 text-blue-600">
+                        <i class="fas fa-play-circle mr-2" aria-hidden="true"></i>
+                        4. 動作確認
+                    </h2>
+                    <div class="prose max-w-none">
+                        <p class="text-lg text-gray-700 mb-4">
+                            構築した環境が正しく動作するかを確認します。
+                        </p>
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                            <h3 class="font-semibold text-yellow-800 mb-2">チェックポイント</h3>
+                            <ul class="list-disc list-inside text-yellow-700 space-y-1">
+                                <li>tmuxセッションが正常に起動する</li>
+                                <li>claudeMAXが複数のペインで動作する</li>
+                                <li>セッション間の切り替えがスムーズに行える</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors" data-chapter="4">
+                            <i class="fas fa-check mr-2" aria-hidden="true"></i>
+                            チャプター完了
+                        </button>
+                    </div>
+                </section>
+
+                <!-- チャプター5: 応用 -->
+                <section id="chapter-5" class="chapter bg-white rounded-lg shadow-md p-6 sm:p-8 mb-8" style="display: none;" role="article" aria-labelledby="chapter-5-title">
+                    <h2 id="chapter-5-title" class="text-2xl font-bold mb-6 text-blue-600">
+                        <i class="fas fa-rocket mr-2" aria-hidden="true"></i>
+                        5. 応用
+                    </h2>
+                    <div class="prose max-w-none">
+                        <p class="text-lg text-gray-700 mb-4">
+                            より高度な使い方や応用例について学習します。
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-green-50 p-4 rounded-lg text-center">
+                                <i class="fas fa-code text-green-600 text-2xl mb-2" aria-hidden="true"></i>
+                                <h4 class="font-semibold text-green-800">
+                                    <div class="tooltip">
+                                        <span class="text-green-600 cursor-help underline" tabindex="0" role="button" aria-describedby="automation-tooltip">自動化スクリプト</span>
+                                        <span class="tooltiptext" id="automation-tooltip" role="tooltip">開発環境の起動、設定、プロジェクト準備を自動化するスクリプト群です。</span>
+                                    </div>
+                                </h4>
+                                <p class="text-sm text-green-600">開発環境の自動起動</p>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg text-center">
+                                <i class="fas fa-network-wired text-purple-600 text-2xl mb-2" aria-hidden="true"></i>
+                                <h4 class="font-semibold text-purple-800">
+                                    <div class="tooltip">
+                                        <span class="text-purple-600 cursor-help underline" tabindex="0" role="button" aria-describedby="multi-project-tooltip">複数プロジェクト管理</span>
+                                        <span class="tooltiptext" id="multi-project-tooltip" role="tooltip">複数のプロジェクトを効率的に切り替えながら開発するためのワークフロー管理手法です。</span>
+                                    </div>
+                                </h4>
+                                <p class="text-sm text-purple-600">効率的なワークフロー</p>
+                            </div>
+                            <div class="bg-orange-50 p-4 rounded-lg text-center">
+                                <i class="fas fa-tools text-orange-600 text-2xl mb-2" aria-hidden="true"></i>
+                                <h4 class="font-semibold text-orange-800">
+                                    <div class="tooltip">
+                                        <span class="text-orange-600 cursor-help underline" tabindex="0" role="button" aria-describedby="customize-tooltip">カスタマイズ</span>
+                                        <span class="tooltiptext" id="customize-tooltip" role="tooltip">個人の開発スタイルに合わせたtmux設定とClaudeCode連携の最適化です。</span>
+                                    </div>
+                                </h4>
+                                <p class="text-sm text-orange-600">個人設定の最適化</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors" data-chapter="5">
+                            <i class="fas fa-check mr-2" aria-hidden="true"></i>
+                            チャプター完了
+                        </button>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <footer class="bg-gray-800 text-white py-8 mt-16" role="contentinfo">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 tmux環境でclaudeMAX管理 教材サイト</p>
+        </div>
+    </footer>
+
+    <script src="enhanced-script.js"></script>
+</body>
+</html>

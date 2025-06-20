@@ -321,11 +321,295 @@ class ResponsiveHandler {
     }
 }
 
+// 認証管理システム
+class AuthManager {
+    constructor() {
+        this.user = null;
+        this.token = localStorage.getItem('auth-token');
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.checkAuthStatus();
+        this.updateBuildInfo();
+    }
+
+    setupEventListeners() {
+        // ログインボタン
+        document.getElementById('login-btn').addEventListener('click', () => {
+            this.showModal('login-modal');
+        });
+
+        // 新規登録ボタン
+        document.getElementById('register-btn').addEventListener('click', () => {
+            this.showModal('register-modal');
+        });
+
+        // モーダル切り替え
+        document.getElementById('switch-to-register').addEventListener('click', () => {
+            this.hideModal('login-modal');
+            this.showModal('register-modal');
+        });
+
+        document.getElementById('switch-to-login').addEventListener('click', () => {
+            this.hideModal('register-modal');
+            this.showModal('login-modal');
+        });
+
+        // モーダル閉じる
+        document.querySelectorAll('[id^="close-"][id$="-modal"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const modalId = btn.id.replace('close-', '').replace('-modal', '') + '-modal';
+                this.hideModal(modalId);
+            });
+        });
+
+        // ユーザーメニュー
+        document.getElementById('user-menu-btn').addEventListener('click', () => {
+            const menu = document.getElementById('user-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // プロフィール表示
+        document.getElementById('profile-btn').addEventListener('click', () => {
+            this.showProfile();
+        });
+
+        // ログアウト
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            this.logout();
+        });
+
+        // フォーム送信
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleLogin();
+        });
+
+        document.getElementById('register-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleRegister();
+        });
+    }
+
+    showModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+    }
+
+    hideModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+
+    async handleLogin() {
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+
+        try {
+            // デモ用 - 実際のAPIコールに置き換え
+            if (username && password) {
+                this.user = { username, email: 'demo@example.com' };
+                this.token = 'demo-token';
+                localStorage.setItem('auth-token', this.token);
+                this.updateAuthUI();
+                this.hideModal('login-modal');
+                this.showNotification('ログインしました');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            this.showNotification('ログインに失敗しました', 'error');
+        }
+    }
+
+    async handleRegister() {
+        const username = document.getElementById('register-username').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+
+        if (password.length < 6) {
+            this.showNotification('パスワードは6文字以上で入力してください', 'error');
+            return;
+        }
+
+        try {
+            // デモ用 - 実際のAPIコールに置き換え
+            this.user = { username, email: email || null };
+            this.token = 'demo-token';
+            localStorage.setItem('auth-token', this.token);
+            this.updateAuthUI();
+            this.hideModal('register-modal');
+            this.showNotification('アカウントを作成しました');
+        } catch (error) {
+            console.error('Register error:', error);
+            this.showNotification('登録に失敗しました', 'error');
+        }
+    }
+
+    checkAuthStatus() {
+        if (this.token) {
+            // デモ用ユーザー
+            this.user = { username: 'デモユーザー', email: 'demo@example.com' };
+            this.updateAuthUI();
+        }
+    }
+
+    updateAuthUI() {
+        const userInfo = document.getElementById('user-info');
+        const loginSection = document.getElementById('login-section');
+        const username = document.getElementById('username');
+
+        if (this.user) {
+            userInfo.classList.remove('hidden');
+            userInfo.classList.add('flex');
+            loginSection.classList.add('hidden');
+            username.textContent = this.user.username;
+        } else {
+            userInfo.classList.add('hidden');
+            userInfo.classList.remove('flex');
+            loginSection.classList.remove('hidden');
+        }
+    }
+
+    showProfile() {
+        if (!this.user) return;
+
+        document.getElementById('profile-username').textContent = this.user.username;
+        document.getElementById('profile-email').textContent = this.user.email || 'メールアドレス未設定';
+        document.getElementById('profile-created').textContent = '2025-06-20';
+        document.getElementById('profile-progress').textContent = '60%';
+        document.getElementById('profile-completed-chapters').textContent = '3/5';
+
+        this.showModal('profile-modal');
+        document.getElementById('user-menu').classList.add('hidden');
+    }
+
+    logout() {
+        this.user = null;
+        this.token = null;
+        localStorage.removeItem('auth-token');
+        this.updateAuthUI();
+        document.getElementById('user-menu').classList.add('hidden');
+        this.showNotification('ログアウトしました');
+    }
+
+    showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+        const icon = type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+        
+        notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300`;
+        notification.innerHTML = `<i class="${icon} mr-2"></i>${message}`;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => document.body.removeChild(notification), 300);
+        }, 3000);
+    }
+
+    updateBuildInfo() {
+        // ビルドハッシュを生成（実際はビルド時に設定）
+        const buildHash = Math.random().toString(36).substring(2, 9);
+        document.getElementById('build-hash').textContent = buildHash;
+        
+        // 最終更新日を設定
+        const now = new Date().toLocaleDateString('ja-JP');
+        document.getElementById('last-updated').textContent = now;
+    }
+}
+
+// クイズシステム
+class QuizManager {
+    constructor() {
+        this.quizData = {
+            1: {
+                question: "tmuxの主な用途は何ですか？",
+                options: {
+                    A: "ファイルを圧縮する",
+                    B: "複数のターミナルセッションを管理する",
+                    C: "データベースを管理する",
+                    D: "ウェブサーバーを起動する"
+                },
+                correct: "B",
+                explanation: "tmux (Terminal Multiplexer) は、一つのターミナル内で複数のセッションやウィンドウを管理するためのツールです。開発者が複数のコマンドライン作業を効率的に行うために使用されます。"
+            }
+        };
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                this.handleQuizAnswer(e);
+            });
+        });
+
+        document.getElementById('close-quiz-modal').addEventListener('click', () => {
+            document.getElementById('quiz-feedback-modal').classList.add('hidden');
+        });
+    }
+
+    handleQuizAnswer(e) {
+        const selectedAnswer = e.target.dataset.answer;
+        const questionElement = e.target.closest('.quiz-question');
+        const chapterNum = parseInt(questionElement.dataset.chapter);
+        const questionNum = parseInt(questionElement.dataset.question);
+        
+        const quizData = this.quizData[chapterNum];
+        if (!quizData) return;
+
+        const isCorrect = selectedAnswer === quizData.correct;
+        this.showFeedback(isCorrect, quizData, selectedAnswer);
+
+        // 選択肢を無効化
+        questionElement.querySelectorAll('.quiz-option').forEach(opt => {
+            opt.disabled = true;
+            opt.classList.add('cursor-not-allowed');
+            if (opt.dataset.answer === quizData.correct) {
+                opt.classList.add('bg-green-100', 'border-green-500');
+            } else if (opt.dataset.answer === selectedAnswer && !isCorrect) {
+                opt.classList.add('bg-red-100', 'border-red-500');
+            }
+        });
+    }
+
+    showFeedback(isCorrect, quizData, selectedAnswer) {
+        const modal = document.getElementById('quiz-feedback-modal');
+        const icon = document.getElementById('quiz-result-icon');
+        const title = document.getElementById('quiz-result-title');
+        const explanation = document.getElementById('quiz-explanation');
+        const correctAnswer = document.getElementById('quiz-correct-answer');
+
+        if (isCorrect) {
+            icon.textContent = '✅';
+            title.textContent = '正解！';
+            title.className = 'text-2xl font-bold mb-4 text-green-600';
+        } else {
+            icon.textContent = '❌';
+            title.textContent = '不正解...';
+            title.className = 'text-2xl font-bold mb-4 text-red-600';
+        }
+
+        explanation.textContent = quizData.explanation;
+        correctAnswer.textContent = `正解: ${quizData.correct}. ${quizData.options[quizData.correct]}`;
+
+        modal.classList.remove('hidden');
+    }
+}
+
 // アプリケーション初期化
 document.addEventListener('DOMContentLoaded', () => {
     const progressTracker = new ProgressTracker();
     const glossary = new Glossary();
     const responsiveHandler = new ResponsiveHandler();
+    const authManager = new AuthManager();
+    const quizManager = new QuizManager();
     
     // デバッグ用のリセット機能（開発時のみ）
     if (window.location.search.includes('debug=true')) {

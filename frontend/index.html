@@ -6,6 +6,10 @@
     <title>tmux環境でclaudeMAX管理 - 教材サイト</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Prism.js CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.css" rel="stylesheet">
     <style>
         .tooltip {
             position: relative;
@@ -47,6 +51,41 @@
                     <span class="text-sm">進捗: <span id="progress-percentage">0%</span></span>
                     <div class="w-32 bg-blue-300 rounded-full h-2">
                         <div id="progress-bar" class="progress-bar bg-white h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                    
+                    <!-- ユーザー情報エリア -->
+                    <div id="user-info" class="hidden flex items-center space-x-3">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-blue-600"></i>
+                            </div>
+                            <span id="username" class="text-sm font-medium"></span>
+                        </div>
+                        <div class="relative">
+                            <button id="user-menu-btn" class="text-white hover:text-blue-200 transition-colors">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
+                                <div class="py-1">
+                                    <button id="profile-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">
+                                        <i class="fas fa-user mr-2"></i>プロフィール
+                                    </button>
+                                    <button id="logout-btn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">
+                                        <i class="fas fa-sign-out-alt mr-2"></i>ログアウト
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ログインボタン -->
+                    <div id="login-section" class="flex items-center space-x-2">
+                        <button id="login-btn" class="bg-white text-blue-600 px-4 py-1 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors">
+                            ログイン
+                        </button>
+                        <button id="register-btn" class="border border-white text-white px-4 py-1 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                            新規登録
+                        </button>
                     </div>
                 </div>
             </div>
@@ -121,6 +160,32 @@
                         </div>
                         を組み合わせることで、開発効率を大幅に向上させることができます。
                     </div>
+                    
+                    <!-- クイズセクション -->
+                    <div class="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold mb-4 text-blue-800">
+                            <i class="fas fa-question-circle mr-2"></i>
+                            理解度チェック
+                        </h3>
+                        <div class="quiz-question" data-chapter="1" data-question="1">
+                            <p class="mb-4 text-gray-700">tmuxの主な用途は何ですか？</p>
+                            <div class="space-y-2">
+                                <button class="quiz-option w-full text-left p-3 rounded-lg border hover:bg-blue-50 transition-colors" data-answer="A">
+                                    A. ファイルを圧縮する
+                                </button>
+                                <button class="quiz-option w-full text-left p-3 rounded-lg border hover:bg-blue-50 transition-colors" data-answer="B">
+                                    B. 複数のターミナルセッションを管理する
+                                </button>
+                                <button class="quiz-option w-full text-left p-3 rounded-lg border hover:bg-blue-50 transition-colors" data-answer="C">
+                                    C. データベースを管理する
+                                </button>
+                                <button class="quiz-option w-full text-left p-3 rounded-lg border hover:bg-blue-50 transition-colors" data-answer="D">
+                                    D. ウェブサーバーを起動する
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="mt-6">
                         <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-chapter="1">
                             <i class="fas fa-check mr-2"></i>
@@ -172,12 +237,14 @@
                         <p class="text-lg text-gray-700 mb-4">
                             実際にtmux環境を構築し、claudeMAXを設定します。
                         </p>
-                        <div class="bg-gray-800 text-green-400 p-4 rounded-lg mb-6 font-mono text-sm overflow-x-auto">
-                            <div class="mb-2"># tmuxのインストール</div>
-                            <div class="mb-2">sudo apt-get install tmux</div>
-                            <div class="mb-2"># 新しいセッションを作成</div>
-                            <div>tmux new-session -d -s claude-dev</div>
-                        </div>
+                        <pre class="language-bash"><code># tmuxのインストール
+sudo apt-get install tmux
+
+# 新しいセッションを作成
+tmux new-session -d -s claude-dev
+
+# セッションにアタッチ
+tmux attach-session -t claude-dev</code></pre>
                     </div>
                     <div class="mt-6">
                         <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-chapter="3">
@@ -205,6 +272,19 @@
                                 <li>セッション間の切り替えがスムーズに行える</li>
                             </ul>
                         </div>
+                        
+                        <h3 class="text-lg font-semibold mb-3">動作確認コマンド</h3>
+                        <pre class="language-bash"><code># セッション一覧を確認
+tmux list-sessions
+
+# 新しいウィンドウを作成
+tmux new-window -n "claude-window"
+
+# ペインを分割
+tmux split-window -h
+
+# Claude Codeを起動
+claude-code --session multi-agent</code></pre>
                     </div>
                     <div class="mt-6">
                         <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-chapter="4">
@@ -241,6 +321,58 @@
                                 <p class="text-sm text-orange-600">個人設定の最適化</p>
                             </div>
                         </div>
+                        
+                        <h3 class="text-lg font-semibold mb-3">自動化スクリプト例</h3>
+                        <pre class="language-bash"><code>#!/bin/bash
+# claude-dev-setup.sh - 開発環境自動起動スクリプト
+
+SESSION_NAME="claude-dev"
+
+# 既存セッションがあれば削除
+tmux kill-session -t $SESSION_NAME 2>/dev/null
+
+# 新しいセッションを作成
+tmux new-session -d -s $SESSION_NAME
+
+# ウィンドウ1: メインエディタ
+tmux rename-window -t $SESSION_NAME:0 'editor'
+tmux send-keys -t $SESSION_NAME:0 'claude-code .' C-m
+
+# ウィンドウ2: ターミナル作業
+tmux new-window -t $SESSION_NAME -n 'terminal'
+tmux split-window -h -t $SESSION_NAME:1
+tmux send-keys -t $SESSION_NAME:1.0 'npm run dev' C-m
+tmux send-keys -t $SESSION_NAME:1.1 'git status' C-m
+
+# ウィンドウ3: 監視・テスト
+tmux new-window -t $SESSION_NAME -n 'monitoring'
+tmux send-keys -t $SESSION_NAME:2 'npm test -- --watch' C-m
+
+# セッションにアタッチ
+tmux attach-session -t $SESSION_NAME</code></pre>
+
+                        <h3 class="text-lg font-semibold mb-3 mt-6">tmux設定ファイル (.tmux.conf)</h3>
+                        <pre class="language-bash"><code># プレフィックスキーをCtrl+aに変更
+set -g prefix C-a
+unbind C-b
+bind C-a send-prefix
+
+# ウィンドウ番号を1から開始
+set -g base-index 1
+setw -g pane-base-index 1
+
+# マウス操作を有効にする
+set -g mouse on
+
+# ステータスバーのカスタマイズ
+set -g status-bg colour234
+set -g status-fg white
+set -g status-left '#[fg=green]Session: #S #[default]'
+set -g status-right '#[fg=cyan]%Y-%m-%d %H:%M #[default]'
+
+# ペイン境界線の色
+set -g pane-border-fg colour238
+set -g pane-active-border-fg colour154</code></pre>
                     </div>
                     <div class="mt-6">
                         <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-chapter="5">
@@ -253,13 +385,242 @@
         </div>
     </div>
 
+    <!-- ログインモーダル -->
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold">ログイン</h3>
+                <button id="close-login-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ユーザー名</label>
+                    <input type="text" id="login-username" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">パスワード</label>
+                    <input type="password" id="login-password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                    ログイン
+                </button>
+            </form>
+            <p class="text-center text-sm text-gray-600 mt-4">
+                アカウントをお持ちでない方は 
+                <button id="switch-to-register" class="text-blue-600 hover:underline">こちら</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- 新規登録モーダル -->
+    <div id="register-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold">新規登録</h3>
+                <button id="close-register-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="register-form">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ユーザー名</label>
+                    <input type="text" id="register-username" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">メールアドレス (任意)</label>
+                    <input type="email" id="register-email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">パスワード</label>
+                    <input type="password" id="register-password" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <p class="text-xs text-gray-500 mt-1">6文字以上で入力してください</p>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                    新規登録
+                </button>
+            </form>
+            <p class="text-center text-sm text-gray-600 mt-4">
+                既にアカウントをお持ちの方は 
+                <button id="switch-to-login" class="text-blue-600 hover:underline">こちら</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- プロフィールモーダル -->
+    <div id="profile-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold">プロフィール</h3>
+                <button id="close-profile-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user text-blue-600 text-2xl"></i>
+                </div>
+                <h4 id="profile-username" class="text-lg font-semibold"></h4>
+                <p id="profile-email" class="text-gray-600 text-sm"></p>
+            </div>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center py-2 border-b">
+                    <span class="text-gray-700">登録日</span>
+                    <span id="profile-created" class="text-gray-900 font-medium"></span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b">
+                    <span class="text-gray-700">完了章数</span>
+                    <span id="profile-completed-chapters" class="text-blue-600 font-medium">0/5</span>
+                </div>
+                <div class="flex justify-between items-center py-2">
+                    <span class="text-gray-700">全体進捗</span>
+                    <span id="profile-progress" class="text-green-600 font-medium">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- クイズフィードバックモーダル -->
+    <div id="quiz-feedback-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg p-8 max-w-lg w-full mx-4">
+            <div class="text-center">
+                <div id="quiz-result-icon" class="text-6xl mb-4">
+                    <!-- 正解時: ✅ 不正解時: ❌ -->
+                </div>
+                <h3 id="quiz-result-title" class="text-2xl font-bold mb-4">
+                    <!-- 正解! または 不正解... -->
+                </h3>
+                <div id="quiz-explanation" class="text-gray-700 mb-6 text-left bg-gray-50 p-4 rounded-lg">
+                    <!-- 解説内容 -->
+                </div>
+                <div id="quiz-correct-answer" class="text-green-600 font-medium mb-6">
+                    <!-- 正解: B. 複数のターミナルセッションを管理する -->
+                </div>
+                <button id="close-quiz-modal" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-check mr-2"></i>
+                    理解しました
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- フッター -->
-    <footer class="bg-gray-800 text-white py-8 mt-16">
-        <div class="container mx-auto px-4 text-center">
-            <p>&copy; 2025 tmux環境でclaudeMAX管理 教材サイト</p>
+    <footer class="bg-gray-800 text-white py-12 mt-16">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- サイト情報 -->
+                <div class="md:col-span-2">
+                    <h3 class="text-xl font-bold mb-4">
+                        <i class="fas fa-terminal mr-2"></i>
+                        tmux環境でclaudeMAX管理
+                    </h3>
+                    <p class="text-gray-300 mb-4">
+                        tmux環境でClaude Codeを効率的に管理する方法を学習できる初心者向け教材サイトです。
+                        実践的なコマンドとベストプラクティスを通じて、開発効率を向上させましょう。
+                    </p>
+                    <div class="flex items-center space-x-4">
+                        <a href="https://github.com/39bit-onsen/claude-max-tmux-tutorial-site" 
+                           class="flex items-center text-gray-300 hover:text-white transition-colors"
+                           target="_blank" rel="noopener noreferrer">
+                            <i class="fab fa-github mr-2"></i>
+                            GitHub リポジトリ
+                        </a>
+                        <span class="text-gray-500">|</span>
+                        <span class="text-gray-400 text-sm">
+                            <i class="fas fa-code-branch mr-1"></i>
+                            Build: <span id="build-hash">a1b2c3d</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- クイックリンク -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">クイックリンク</h4>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="#chapter-1" class="text-gray-300 hover:text-white transition-colors">
+                                <i class="fas fa-home mr-2"></i>はじめに
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#chapter-3" class="text-gray-300 hover:text-white transition-colors">
+                                <i class="fas fa-cog mr-2"></i>環境構築
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#chapter-5" class="text-gray-300 hover:text-white transition-colors">
+                                <i class="fas fa-rocket mr-2"></i>応用
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- リソース -->
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">リソース</h4>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="https://github.com/tmux/tmux" 
+                               class="text-gray-300 hover:text-white transition-colors"
+                               target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-github mr-2"></i>tmux 公式
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://claude.ai/code" 
+                               class="text-gray-300 hover:text-white transition-colors"
+                               target="_blank" rel="noopener noreferrer">
+                                <i class="fas fa-external-link-alt mr-2"></i>Claude Code
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://github.com/39bit-onsen/claude-max-tmux-tutorial-site/issues" 
+                               class="text-gray-300 hover:text-white transition-colors"
+                               target="_blank" rel="noopener noreferrer">
+                                <i class="fas fa-bug mr-2"></i>フィードバック
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 区切り線 -->
+            <hr class="border-gray-700 my-8">
+            
+            <!-- ライセンス・著作権情報 -->
+            <div class="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
+                <div class="mb-4 md:mb-0">
+                    <p>&copy; 2025 tmux環境でclaudeMAX管理 教材サイト. All rights reserved.</p>
+                    <p class="mt-1">
+                        <i class="fas fa-balance-scale mr-1"></i>
+                        ライセンス: 
+                        <a href="https://github.com/39bit-onsen/claude-max-tmux-tutorial-site/blob/main/LICENSE" 
+                           class="text-blue-400 hover:text-blue-300 transition-colors"
+                           target="_blank" rel="noopener noreferrer">
+                            MIT License
+                        </a>
+                    </p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-heart text-red-500 mr-1"></i>
+                        <span>Made with Claude Code</span>
+                    </div>
+                    <div class="text-xs">
+                        <i class="fas fa-clock mr-1"></i>
+                        最終更新: <span id="last-updated">2025-06-20</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </footer>
 
+    <!-- Prism.js Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

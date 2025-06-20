@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ページが見つかりません - tmux環境でclaudeMAX管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .floating-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        .error-code {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+    <div class="container mx-auto px-4 text-center">
+        <div class="max-w-2xl mx-auto">
+            <!-- アニメーション付きアイコン -->
+            <div class="floating-animation mb-8">
+                <i class="fas fa-terminal text-8xl text-blue-600 mb-4"></i>
+            </div>
+            
+            <!-- エラーコード -->
+            <h1 class="error-code text-9xl font-bold mb-4">404</h1>
+            
+            <!-- エラーメッセージ -->
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">
+                ページが見つかりません
+            </h2>
+            <p class="text-lg text-gray-600 mb-8">
+                お探しのページは存在しないか、移動された可能性があります。<br>
+                tmuxセッションのように、別の場所に移動したのかもしれません。
+            </p>
+            
+            <!-- ナビゲーション支援 -->
+            <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">
+                    <i class="fas fa-compass mr-2 text-blue-600"></i>
+                    どちらに向かいますか？
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <a href="index.html" class="flex items-center justify-center p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-home mr-3"></i>
+                        <div class="text-left">
+                            <div class="font-semibold">ホームに戻る</div>
+                            <div class="text-sm opacity-90">教材のトップページ</div>
+                        </div>
+                    </a>
+                    <a href="index.html#chapter-1" class="flex items-center justify-center p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-play mr-3"></i>
+                        <div class="text-left">
+                            <div class="font-semibold">学習を開始</div>
+                            <div class="text-sm opacity-90">第1章から始める</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 人気コンテンツ -->
+            <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">
+                    <i class="fas fa-star mr-2 text-yellow-500"></i>
+                    人気のコンテンツ
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <a href="index.html#chapter-1" class="block p-4 border rounded-lg hover:bg-blue-50 transition-colors">
+                        <i class="fas fa-home text-blue-600 mb-2"></i>
+                        <div class="font-medium text-gray-800">1. はじめに</div>
+                        <div class="text-sm text-gray-600">tmuxとclaudeMAXの概要</div>
+                    </a>
+                    <a href="index.html#chapter-3" class="block p-4 border rounded-lg hover:bg-blue-50 transition-colors">
+                        <i class="fas fa-cog text-blue-600 mb-2"></i>
+                        <div class="font-medium text-gray-800">3. 環境構築</div>
+                        <div class="text-sm text-gray-600">実際の設定手順</div>
+                    </a>
+                    <a href="index.html#chapter-5" class="block p-4 border rounded-lg hover:bg-blue-50 transition-colors">
+                        <i class="fas fa-rocket text-blue-600 mb-2"></i>
+                        <div class="font-medium text-gray-800">5. 応用</div>
+                        <div class="text-sm text-gray-600">高度な使い方</div>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- tmuxスタイルのヒント -->
+            <div class="bg-gray-800 text-green-400 rounded-lg p-6 font-mono text-left">
+                <div class="mb-2"># tmuxセッションを復元するように、教材に戻りましょう</div>
+                <div class="mb-2">$ tmux attach-session -t learning</div>
+                <div class="mb-2"># または新しい学習セッションを開始</div>
+                <div class="text-white">$ tmux new-session -s "claude-tutorial"</div>
+            </div>
+            
+            <!-- フッター -->
+            <div class="mt-12 text-center text-gray-500">
+                <p>&copy; 2025 tmux環境でclaudeMAX管理 教材サイト</p>
+                <p class="text-sm mt-2">
+                    <a href="https://github.com/39bit-onsen/claude-max-tmux-tutorial-site" class="hover:text-blue-600 transition-colors">
+                        <i class="fab fa-github mr-1"></i>
+                        GitHub
+                    </a>
+                    <span class="mx-2">|</span>
+                    <a href="index.html" class="hover:text-blue-600 transition-colors">
+                        ホーム
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // URLパラメータから元のパスを取得して表示
+        const urlParams = new URLSearchParams(window.location.search);
+        const originalPath = urlParams.get('path');
+        if (originalPath) {
+            const pathDisplay = document.createElement('div');
+            pathDisplay.className = 'text-sm text-gray-500 mt-4';
+            pathDisplay.textContent = `元のパス: ${originalPath}`;
+            document.querySelector('.error-code').after(pathDisplay);
+        }
+
+        // ランダムなtmuxコマンドを表示
+        const tmuxCommands = [
+            'tmux list-sessions',
+            'tmux new-window -n "tutorial"',
+            'tmux split-window -h',
+            'tmux attach-session -t learning',
+            'tmux kill-session -t old-session'
+        ];
+        
+        const randomCommand = tmuxCommands[Math.floor(Math.random() * tmuxCommands.length)];
+        document.addEventListener('DOMContentLoaded', function() {
+            const codeBlock = document.querySelector('.bg-gray-800 .text-white');
+            if (codeBlock) {
+                codeBlock.textContent = `$ ${randomCommand}`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,664 @@
+.collaborative-learning {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+}
+
+/* ヘッダー */
+.collaboration-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.collaboration-header h2 {
+  color: var(--color-text);
+  font-size: 1.75rem;
+  margin: 0;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.status-indicator {
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.status-indicator.connected {
+  background: var(--color-success-light);
+  color: var(--color-success);
+  border: 1px solid rgba(var(--color-success-rgb), 0.3);
+}
+
+.status-indicator.disconnected {
+  background: var(--color-error-light);
+  color: var(--color-error);
+  border: 1px solid rgba(var(--color-error-rgb), 0.3);
+}
+
+/* セッション管理 */
+.session-management {
+  display: grid;
+  gap: var(--spacing-xl);
+}
+
+.session-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.create-session,
+.join-session {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.create-session h3,
+.join-session h3 {
+  color: var(--color-text);
+  font-size: 1.25rem;
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.create-session p,
+.join-session p {
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.create-button,
+.join-button {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  width: 100%;
+}
+
+.create-button:hover:not(:disabled),
+.join-button:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.create-button:disabled,
+.join-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.join-form {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.session-code-input {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 1rem;
+  font-family: var(--font-family-mono);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.session-code-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+}
+
+/* 共同学習の特徴 */
+.collaboration-benefits {
+  background: var(--color-info-light);
+  border: 1px solid rgba(var(--color-info-rgb), 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+.collaboration-benefits h3 {
+  color: var(--color-info);
+  font-size: 1.25rem;
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.collaboration-benefits ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.collaboration-benefits li {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* アクティブセッション */
+.active-session {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+/* セッション情報 */
+.session-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+}
+
+.session-details h3 {
+  color: var(--color-text);
+  font-size: 1.25rem;
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.session-details p {
+  color: var(--color-text-secondary);
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.host-badge {
+  background: var(--color-warning);
+  color: white;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: var(--spacing-sm);
+}
+
+.leave-button {
+  background: var(--color-error);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.leave-button:hover {
+  background: var(--color-error);
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* メンバー一覧 */
+.session-members {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+}
+
+.session-members h4 {
+  color: var(--color-text);
+  font-size: 1rem;
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.members-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.member-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  transition: transform var(--transition-fast);
+}
+
+.member-card:hover {
+  transform: translateY(-1px);
+}
+
+.member-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 0.875rem;
+}
+
+.member-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.member-progress {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
+
+.member-host {
+  font-size: 0.875rem;
+}
+
+/* 共有進捗 */
+.shared-progress {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+}
+
+.shared-progress h4 {
+  color: var(--color-text);
+  font-size: 1rem;
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.progress-bar {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  height: 12px;
+  overflow: hidden;
+  margin-bottom: var(--spacing-sm);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-success));
+  height: 100%;
+  transition: width var(--transition-normal);
+}
+
+.progress-text {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  text-align: right;
+  display: block;
+}
+
+/* チャット */
+.chat-section {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+}
+
+.chat-section h4 {
+  color: var(--color-text);
+  font-size: 1rem;
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.chat-messages {
+  height: 200px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.chat-message {
+  margin-bottom: var(--spacing-sm);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+}
+
+.chat-message.own-message {
+  background: rgba(var(--color-primary-rgb), 0.1);
+  margin-left: var(--spacing-lg);
+}
+
+.chat-message.other-message {
+  background: var(--color-background);
+  margin-right: var(--spacing-lg);
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.message-author {
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.message-time {
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+}
+
+.message-content {
+  color: var(--color-text);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.chat-input {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.message-input {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.message-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.send-button {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.send-button:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.send-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 共有コード */
+.shared-code {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  position: relative;
+}
+
+.shared-code h4 {
+  color: var(--color-text);
+  font-size: 1rem;
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.code-editor {
+  width: 100%;
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-family-mono);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.code-editor:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.cursor-positions {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.cursor-indicator {
+  position: absolute;
+  width: 2px;
+  height: 20px;
+  background: var(--color-warning);
+  animation: blink 1s infinite;
+}
+
+.cursor-label {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  background: var(--color-warning);
+  color: white;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* チーム目標 */
+.team-goals {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+}
+
+.team-goals h4 {
+  color: var(--color-text);
+  font-size: 1rem;
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.goal-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+}
+
+.goal-text {
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.goal-progress {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* 統計情報 */
+.collaboration-stats {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+}
+
+.collaboration-stats h4 {
+  color: var(--color-text);
+  font-size: 1rem;
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.stat-item {
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .collaborative-learning {
+    padding: var(--spacing-md);
+  }
+  
+  .collaboration-header {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    text-align: center;
+  }
+  
+  .session-actions {
+    grid-template-columns: 1fr;
+  }
+  
+  .session-info {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    text-align: center;
+  }
+  
+  .members-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .join-form {
+    flex-direction: column;
+  }
+  
+  .chat-input {
+    flex-direction: column;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  }
+}
+
+/* スクロールバー */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-hover);
+}
+
+/* 動作軽減設定 */
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill,
+  .member-card,
+  .create-button,
+  .join-button {
+    transition: none;
+  }
+  
+  .cursor-indicator {
+    animation: none;
+  }
+}
+
+/* 高コントラストモード */
+@media (prefers-contrast: high) {
+  .member-avatar {
+    border: 2px solid currentColor;
+  }
+  
+  .progress-bar {
+    border: 1px solid currentColor;
+  }
+}
