@@ -12,8 +12,8 @@ tmux環境でClaudeMAX（Claude Code）を複数起動し、効率的に管理�
 
 ### インストール
 ```bash
-git clone https://github.com/your-repo/claude-code-communication.git
-cd claude-code-communication/tutorial-site
+git clone https://github.com/39bit-onsen/claude-max-tmux-tutorial-site.git
+cd claude-max-tmux-tutorial-site
 npm install
 ```
 
@@ -156,7 +156,7 @@ MIT License - 詳細は [LICENSE](LICENSE) ファイルを参照
 
 ## 📞 サポート
 
-- Issue: [GitHub Issues](https://github.com/your-repo/claude-code-communication/issues)
+- Issue: [GitHub Issues](https://github.com/39bit-onsen/claude-max-tmux-tutorial-site/issues)
 - Email: support@example.com
 - ドキュメント: [docs/](./docs/)
 
