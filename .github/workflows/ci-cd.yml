@@ -1,0 +1,560 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/tutorial-site
+
+jobs:
+  # コード品質チェック
+  lint-and-format:
+    name: 🔍 Lint & Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: tutorial-site/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: tutorial-site
+      run: npm ci
+      
+    - name: Run ESLint
+      working-directory: tutorial-site
+      run: npm run lint
+      
+    - name: Check Prettier formatting
+      working-directory: tutorial-site
+      run: npm run format:check
+      
+    - name: TypeScript type check
+      working-directory: tutorial-site
+      run: npm run type-check
+
+  # セキュリティスキャン
+  security-scan:
+    name: 🔐 Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: tutorial-site/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: tutorial-site
+      run: npm ci
+      
+    - name: Run npm audit
+      working-directory: tutorial-site
+      run: npm audit --audit-level=high
+      
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript
+        
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+
+  # 単体テスト
+  unit-tests:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        test-group: [frontend, backend]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: tutorial_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: tutorial-site/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: tutorial-site
+      run: npm ci
+      
+    - name: Run ${{ matrix.test-group }} tests
+      working-directory: tutorial-site
+      run: npm run test:${{ matrix.test-group }}
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/tutorial_test
+        REDIS_URL: redis://localhost:6379
+        NODE_ENV: test
+        
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v4
+      with:
+        file: tutorial-site/coverage/lcov.info
+        flags: ${{ matrix.test-group }}
+        name: ${{ matrix.test-group }}-coverage
+
+  # 統合テスト
+  integration-tests:
+    name: 🔄 Integration Tests
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, unit-tests]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: tutorial_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: tutorial-site/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: tutorial-site
+      run: npm ci
+      
+    - name: Build application
+      working-directory: tutorial-site
+      run: npm run build
+      
+    - name: Start application
+      working-directory: tutorial-site
+      run: |
+        npm run start:test &
+        sleep 30
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/tutorial_test
+        REDIS_URL: redis://localhost:6379
+        NODE_ENV: test
+        PORT: 3001
+        
+    - name: Run integration tests
+      working-directory: tutorial-site
+      run: npm run test:integration
+      env:
+        TEST_BASE_URL: http://localhost:3001
+
+  # E2Eテスト
+  e2e-tests:
+    name: 🎭 E2E Tests
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: tutorial_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: tutorial-site/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: tutorial-site
+      run: npm ci
+      
+    - name: Install Playwright browsers
+      working-directory: tutorial-site
+      run: npx playwright install --with-deps ${{ matrix.browser }}
+      
+    - name: Build application
+      working-directory: tutorial-site
+      run: npm run build
+      
+    - name: Start application
+      working-directory: tutorial-site
+      run: |
+        npm run start:test &
+        sleep 30
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/tutorial_test
+        REDIS_URL: redis://localhost:6379
+        NODE_ENV: test
+        PORT: 3001
+        
+    - name: Run E2E tests
+      working-directory: tutorial-site
+      run: npm run test:e2e -- --project=${{ matrix.browser }}
+      env:
+        TEST_BASE_URL: http://localhost:3001
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: e2e-results-${{ matrix.browser }}
+        path: tutorial-site/test-results/
+        retention-days: 7
+
+  # Dockerイメージビルド
+  build-docker:
+    name: 🐳 Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [security-scan, unit-tests]
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+          
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: tutorial-site
+        file: tutorial-site/Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+
+  # パフォーマンステスト
+  performance-tests:
+    name: ⚡ Performance Tests
+    runs-on: ubuntu-latest
+    needs: [build-docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: tutorial-site/package-lock.json
+        
+    - name: Install dependencies
+      working-directory: tutorial-site
+      run: npm ci
+      
+    - name: Build application
+      working-directory: tutorial-site
+      run: npm run build
+      
+    - name: Start application
+      working-directory: tutorial-site
+      run: |
+        npm run start:test &
+        sleep 30
+      env:
+        NODE_ENV: production
+        PORT: 3001
+        
+    - name: Run Lighthouse CI
+      working-directory: tutorial-site
+      run: |
+        npm install -g @lhci/cli
+        lhci autorun
+      env:
+        LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+        LHCI_SERVER_BASE_URL: http://localhost:3001
+        
+    - name: Run load tests
+      working-directory: tutorial-site
+      run: npm run test:load
+      env:
+        TEST_BASE_URL: http://localhost:3001
+
+  # ステージング環境デプロイ
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [e2e-tests, build-docker]
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+    
+    environment:
+      name: staging
+      url: https://staging.tutorial-site.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy to staging server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        port: ${{ secrets.STAGING_PORT }}
+        script: |
+          cd /var/www/tutorial-site
+          git fetch origin
+          git checkout ${{ github.ref_name }}
+          git pull origin ${{ github.ref_name }}
+          
+          # 環境変数更新
+          echo "${{ secrets.STAGING_ENV }}" > .env.staging
+          
+          # Docker Compose で更新
+          docker-compose -f docker-compose.staging.yml pull
+          docker-compose -f docker-compose.staging.yml up -d
+          
+          # ヘルスチェック
+          sleep 30
+          curl -f https://staging.tutorial-site.com/health || exit 1
+          
+    - name: Run staging smoke tests
+      working-directory: tutorial-site
+      run: npm run test:smoke
+      env:
+        TEST_BASE_URL: https://staging.tutorial-site.com
+
+  # 本番環境デプロイ
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, performance-tests]
+    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[deploy]')
+    
+    environment:
+      name: production
+      url: https://tutorial-site.com
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Create deployment artifact
+      run: |
+        mkdir -p deployment
+        cp -r tutorial-site/* deployment/
+        tar -czf deployment.tar.gz deployment/
+        
+    - name: Deploy to production server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: ${{ secrets.PRODUCTION_PORT }}
+        script: |
+          # バックアップ作成
+          cd /var/www/tutorial-site
+          ./scripts/backup.sh
+          
+          # 新しいバージョンデプロイ
+          git fetch origin
+          git checkout main
+          git pull origin main
+          
+          # 環境変数更新
+          echo "${{ secrets.PRODUCTION_ENV }}" > .env.production
+          
+          # ゼロダウンタイムデプロイ
+          ./scripts/deploy-production.sh
+          
+          # ヘルスチェック
+          sleep 60
+          curl -f https://tutorial-site.com/health || exit 1
+          
+    - name: Run production smoke tests
+      working-directory: tutorial-site
+      run: npm run test:smoke
+      env:
+        TEST_BASE_URL: https://tutorial-site.com
+        
+    - name: Notify deployment success
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        channel: '#deployments'
+        fields: repo,message,commit,author,action,eventName,ref,workflow
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # デプロイメント通知
+  notify-deployment:
+    name: 📢 Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always()
+    
+    steps:
+    - name: Notify Slack on success
+      if: needs.deploy-production.result == 'success'
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        channel: '#deployments'
+        text: |
+          🎉 Production deployment successful!
+          📝 Commit: ${{ github.event.head_commit.message }}
+          👤 Author: ${{ github.event.head_commit.author.name }}
+          🔗 URL: https://tutorial-site.com
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        
+    - name: Notify Slack on failure
+      if: needs.deploy-production.result == 'failure'
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        channel: '#deployments'
+        text: |
+          🚨 Production deployment failed!
+          📝 Commit: ${{ github.event.head_commit.message }}
+          👤 Author: ${{ github.event.head_commit.author.name }}
+          🔗 Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # クリーンアップ
+  cleanup:
+    name: 🧹 Cleanup
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+    - name: Clean up old Docker images
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        script: |
+          docker image prune -f
+          docker system prune -f --volumes
+          
+    - name: Clean up GitHub packages
+      uses: actions/delete-package-versions@v4
+      with:
+        package-name: tutorial-site
+        package-type: container
+        min-versions-to-keep: 10
+        delete-only-untagged-versions: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

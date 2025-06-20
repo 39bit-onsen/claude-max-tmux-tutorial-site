@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tmux環境でclaudeMAX管理 - 教材サイト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .progress-bar {
+            transition: width 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- ナビゲーションヘッダー -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-bold">tmux環境でclaudeMAX管理</h1>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm">進捗: <span id="progress-percentage">0%</span></span>
+                    <div class="w-32 bg-blue-300 rounded-full h-2">
+                        <div id="progress-bar" class="progress-bar bg-white h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- メインコンテンツ -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- サイドバーナビゲーション -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-6 sticky top-8">
+                    <h2 class="text-lg font-semibold mb-4">学習チャプター</h2>
+                    <nav class="space-y-2">
+                        <a href="#chapter-1" class="chapter-link block p-3 rounded-lg hover:bg-blue-50 transition-colors" data-chapter="1">
+                            <i class="fas fa-home mr-2"></i>
+                            <span>1. はじめに</span>
+                            <span class="chapter-status ml-auto text-sm text-gray-400">未完了</span>
+                        </a>
+                        <a href="#chapter-2" class="chapter-link block p-3 rounded-lg hover:bg-blue-50 transition-colors" data-chapter="2">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <span>2. 導入</span>
+                            <span class="chapter-status ml-auto text-sm text-gray-400">未完了</span>
+                        </a>
+                        <a href="#chapter-3" class="chapter-link block p-3 rounded-lg hover:bg-blue-50 transition-colors" data-chapter="3">
+                            <i class="fas fa-cog mr-2"></i>
+                            <span>3. 環境構築</span>
+                            <span class="chapter-status ml-auto text-sm text-gray-400">未完了</span>
+                        </a>
+                        <a href="#chapter-4" class="chapter-link block p-3 rounded-lg hover:bg-blue-50 transition-colors" data-chapter="4">
+                            <i class="fas fa-play-circle mr-2"></i>
+                            <span>4. 動作確認</span>
+                            <span class="chapter-status ml-auto text-sm text-gray-400">未完了</span>
+                        </a>
+                        <a href="#chapter-5" class="chapter-link block p-3 rounded-lg hover:bg-blue-50 transition-colors" data-chapter="5">
+                            <i class="fas fa-rocket mr-2"></i>
+                            <span>5. 応用</span>
+                            <span class="chapter-status ml-auto text-sm text-gray-400">未完了</span>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- メインコンテンツエリア -->
+            <div class="lg:col-span-3">
+                <!-- チャプター1: はじめに -->
+                <section id="chapter-1" class="chapter bg-white rounded-lg shadow-md p-8 mb-8">
+                    <h2 class="text-2xl font-bold mb-6 text-blue-600">
+                        <i class="fas fa-home mr-2"></i>
+                        1. はじめに
+                    </h2>
+                    <div class="prose max-w-none">
+                        <p class="text-lg text-gray-700 mb-4">
+                            このチュートリアルでは、tmux環境でclaudeMAX（Claude Code）を効率的に管理する方法を学習します。
+                        </p>
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                            <h3 class="font-semibold text-blue-800 mb-2">学習目標</h3>
+                            <ul class="list-disc list-inside text-blue-700 space-y-1">
+                                <li>tmuxの基本的な使い方を理解する</li>
+                                <li>claudeMAXの複数インスタンス管理方法を習得する</li>
+                                <li>効率的な開発環境を構築する</li>
+                            </ul>
+                        </div>
+                        <div class="tooltip">
+                            <span class="text-blue-600 cursor-help underline">tmux</span>
+                            <span class="tooltiptext">ターミナル多重化ツール。複数のターミナルセッションを管理できます</span>
+                        </div>
+                        と
+                        <div class="tooltip">
+                            <span class="text-blue-600 cursor-help underline">claudeMAX</span>
+                            <span class="tooltiptext">Claude Codeの高度な機能を活用した開発環境</span>
+                        </div>
+                        を組み合わせることで、開発効率を大幅に向上させることができます。
+                    </div>
+                    <div class="mt-6">
+                        <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-chapter="1">
+                            <i class="fas fa-check mr-2"></i>
+                            チャプター完了
+                        </button>
+                    </div>
+                </section>
+
+                <!-- チャプター2: 導入 -->
+                <section id="chapter-2" class="chapter bg-white rounded-lg shadow-md p-8 mb-8" style="display: none;">
+                    <h2 class="text-2xl font-bold mb-6 text-blue-600">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        2. 導入
+                    </h2>
+                    <div class="prose max-w-none">
+                        <p class="text-lg text-gray-700 mb-4">
+                            まず、tmuxとclaudeMAXの基本概念について説明します。
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h3 class="font-semibold text-gray-800 mb-2">tmuxとは</h3>
+                                <p class="text-sm text-gray-600">
+                                    Terminal Multiplexerの略で、一つのターミナル内で複数のセッションを実行できるツールです。
+                                </p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h3 class="font-semibold text-gray-800 mb-2">claudeMAXとは</h3>
+                                <p class="text-sm text-gray-600">
+                                    Claude Codeの拡張機能で、より高度な開発支援機能を提供します。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-chapter="2">
+                            <i class="fas fa-check mr-2"></i>
+                            チャプター完了
+                        </button>
+                    </div>
+                </section>
+
+                <!-- チャプター3: 環境構築 -->
+                <section id="chapter-3" class="chapter bg-white rounded-lg shadow-md p-8 mb-8" style="display: none;">
+                    <h2 class="text-2xl font-bold mb-6 text-blue-600">
+                        <i class="fas fa-cog mr-2"></i>
+                        3. 環境構築
+                    </h2>
+                    <div class="prose max-w-none">
+                        <p class="text-lg text-gray-700 mb-4">
+                            実際にtmux環境を構築し、claudeMAXを設定します。
+                        </p>
+                        <div class="bg-gray-800 text-green-400 p-4 rounded-lg mb-6 font-mono text-sm overflow-x-auto">
+                            <div class="mb-2"># tmuxのインストール</div>
+                            <div class="mb-2">sudo apt-get install tmux</div>
+                            <div class="mb-2"># 新しいセッションを作成</div>
+                            <div>tmux new-session -d -s claude-dev</div>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-chapter="3">
+                            <i class="fas fa-check mr-2"></i>
+                            チャプター完了
+                        </button>
+                    </div>
+                </section>
+
+                <!-- チャプター4: 動作確認 -->
+                <section id="chapter-4" class="chapter bg-white rounded-lg shadow-md p-8 mb-8" style="display: none;">
+                    <h2 class="text-2xl font-bold mb-6 text-blue-600">
+                        <i class="fas fa-play-circle mr-2"></i>
+                        4. 動作確認
+                    </h2>
+                    <div class="prose max-w-none">
+                        <p class="text-lg text-gray-700 mb-4">
+                            構築した環境が正しく動作するかを確認します。
+                        </p>
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                            <h3 class="font-semibold text-yellow-800 mb-2">チェックポイント</h3>
+                            <ul class="list-disc list-inside text-yellow-700 space-y-1">
+                                <li>tmuxセッションが正常に起動する</li>
+                                <li>claudeMAXが複数のペインで動作する</li>
+                                <li>セッション間の切り替えがスムーズに行える</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-chapter="4">
+                            <i class="fas fa-check mr-2"></i>
+                            チャプター完了
+                        </button>
+                    </div>
+                </section>
+
+                <!-- チャプター5: 応用 -->
+                <section id="chapter-5" class="chapter bg-white rounded-lg shadow-md p-8 mb-8" style="display: none;">
+                    <h2 class="text-2xl font-bold mb-6 text-blue-600">
+                        <i class="fas fa-rocket mr-2"></i>
+                        5. 応用
+                    </h2>
+                    <div class="prose max-w-none">
+                        <p class="text-lg text-gray-700 mb-4">
+                            より高度な使い方や応用例について学習します。
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-green-50 p-4 rounded-lg text-center">
+                                <i class="fas fa-code text-green-600 text-2xl mb-2"></i>
+                                <h4 class="font-semibold text-green-800">自動化スクリプト</h4>
+                                <p class="text-sm text-green-600">開発環境の自動起動</p>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg text-center">
+                                <i class="fas fa-network-wired text-purple-600 text-2xl mb-2"></i>
+                                <h4 class="font-semibold text-purple-800">複数プロジェクト管理</h4>
+                                <p class="text-sm text-purple-600">効率的なワークフロー</p>
+                            </div>
+                            <div class="bg-orange-50 p-4 rounded-lg text-center">
+                                <i class="fas fa-tools text-orange-600 text-2xl mb-2"></i>
+                                <h4 class="font-semibold text-orange-800">カスタマイズ</h4>
+                                <p class="text-sm text-orange-600">個人設定の最適化</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button class="complete-chapter bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" data-chapter="5">
+                            <i class="fas fa-check mr-2"></i>
+                            チャプター完了
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <footer class="bg-gray-800 text-white py-8 mt-16">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2025 tmux環境でclaudeMAX管理 教材サイト</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

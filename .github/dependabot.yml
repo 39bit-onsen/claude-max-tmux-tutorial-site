@@ -1,0 +1,84 @@
+# Dependabot configuration for automatic dependency updates
+
+version: 2
+
+updates:
+  # Package ecosystem: npm
+  - package-ecosystem: "npm"
+    directory: "/tutorial-site"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "maintainer-team"
+    assignees:
+      - "lead-developer"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+    milestone: "next-release"
+    versioning-strategy: "increase"
+    
+    # 脆弱性のあるパッケージは即座に更新
+    vulnerability-alerts:
+      enabled: true
+    
+    # 無視する依存関係
+    ignore:
+      # メジャーバージョンアップを無視（手動で慎重に更新）
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      
+      # 特定のバージョンを固定
+      - dependency-name: "node"
+        versions: ["19.x", "20.x"] # LTSバージョンのみ使用
+
+  # GitHub Actions workflow dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "devops-team"
+    assignees:
+      - "ci-cd-maintainer"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "github-actions"
+      - "ci-cd"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/tutorial-site"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "devops-team"
+    assignees:
+      - "docker-maintainer"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "docker"
+      - "infrastructure"
